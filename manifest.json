@@ -3,7 +3,7 @@
 
   "name": "Yahoo DJI Stock Counter",
   "description": "Cuenta cuantos indices verdes VS rojos en el Yahoo DJI Index Average.",
-  "version": "1.0.8",
+  "version": "1.0.9",
 
   "permissions": [ "tabs" ],
 
@@ -17,7 +17,7 @@
     {
       "matches": ["https://es-us.finanzas.yahoo.com/q/cp?s=%5EDJI"],
       "js": ["jquery.min.js", "stockcounter.js"],
-      "run_at": "document_end"
+      "run_at": "document_idle"
     }
   ]
 }
