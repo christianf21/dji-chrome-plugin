@@ -8,117 +8,114 @@
 * By Christian Feo.
 */
 
-var stockLocation = "https://es-us.finanzas.yahoo.com/q/cp?s=%5EDJI";
+updateTime = 5; // segundos
 
-
-//operate();
-test();
+console.log("inyected DJI extension script");
+operate();
 
 
 function operate(){
 
 	reload = setTimeout(function(){
-		   //location.reload(true);
-		   console.log("testing.....");
 		   operate();
-		}, 6000);
+		}, updateTime*1000);
 
-	countStock();
-	injectHtml();
+	flow();
 }
 
 function test(){
-	countStock2();
+	flow();
 }
 
-function countStock2(){
+function flow(){
+
+	var spans = getSpanElements();
+
+	if(spans.length > 0){
+		avgCount = getColorAvgCount(spans);
+		injectHtml(avgCount)
+	}
+}
+
+function getSpanElements(){
 
 	items = $("td.yfnc_tabledata1"); // the <td> that has <img>
+	spans = new Array();
 
-	var amount = 0;
+	if(items.length > 0)
+		$.each(items, function(){
 
-	$.each(items, function(){
+			var cant = $(this).children('span');
 
-		var cant = $(this).children('span');
-		if(cant.length == 2)
-			amount += 1;
-	});
+			if(cant.length == 2){
+				$.each(cant, function(){
+					spans.push($(this));
+					return false;
+				});
+			}
+		});
+	else
+		console.log("Table didnt load correctly.");
 
-	console.log("Rows = " + amount);
+	return spans;
 }
 
-function countStock() {
+function getColorAvgCount(sp){
 
-	red = "#cc0000;";
-	green = "#008800;";
+	var green = 0;
+	var red = 0;
+	var black = 0;
 
-	redCount = 0;
-	greenCount = 0;
-	blackCount = 0;
+	var greenClass = "yfi-price-change-green";
+	var redClass = "yfi-price-change-red";
 
-	// used for calculating averages
-	greenNums = new Array();
-	redNums = new Array();
-
-	items = $("td.yfnc_tabledata1").has("span#yfs_c63_aapl"); // the <td> that has <img>
-
-	console.log("Data = " + items.length);
-
-	return;
-	// check if <td> contains <img>, if it does, check if red or green and count each.
-	$.each(items, function(){ 
-
-		var color = $(this).find('b:first').attr('style').split(':')[1];
-
-		var temp =  $(this).find('b:last').text();
-		var value = temp.substr(2,4);
-
-		if(color === red){
-			
-			redCount++;
-			redNums.push( parseFloat( value ) ); // add first <b> values to array for processing later
-
-		} else if (color === green){
-			
-			greenCount++;
-			greenNums.push( parseFloat( value ) );
-		}
-
-	});
-
-	// Calculating Green VS Red averages
-	greenAVG = 0;
-	redAVG = 0;
-
-
-	// GREENs
 	var totalGreen = 0;
-
-	for(i = 0; i<greenNums.length; i++){
-		totalGreen += greenNums[i];
-	}
-
-	greenAVG = totalGreen  / greenNums.length;
-
-
-	// REDs
 	var totalRed = 0;
+	var greenAvg = 0;
+	var redAVg = 0;
 
-	for(z = 0; z<redNums.length; z++){
-		totalRed += redNums[z];
-	}
+	$.each(sp, function(){
 
-	redAVG = totalRed / redNums.length;
+		var tmp = $(this).children("span");
+		var colorClass = $(tmp).attr("class");
+		var amount = $(tmp).text();
+
+		if(colorClass === greenClass){
+			green += 1;
+			totalGreen += parseFloat(amount);
+		}
+		else if(colorClass === redClass){
+			red += 1;
+			totalRed += parseFloat(amount);
+		}
+		else
+			black += 1;
+	});
+
+	greenAvg = totalGreen / green;
+	redAvg = totalRed / red;
+
+	return {
+				redCount:red, 
+				greenCount:green, 
+				blackCount:black,
+				greenAvg:greenAvg.toFixed(2),
+				redAvg:redAvg.toFixed(2)
+			};
 }
 
-function injectHtml(){
-
-	blackCount = 30 - (greenCount + redCount);
+function injectHtml(data){
 
 	$("#companynav").html(
-		"<h1>Index Count:   <span style='color:green;'>" + greenCount +
-	 	"<span style='font-size:20px;'>("+greenAVG.toFixed(2)+"%)</span></span> vs <span style='color:red;'>" + 
-		 redCount + "<span style='font-size:20px;'>("+redAVG.toFixed(2)+"%)</span></span> " + 
-		 (blackCount > 0 ? " ("+blackCount+")" : "") + "</h1>"
+		"<h1>Index Count:   <span style='color:green;'>" + data.greenCount +
+	 	"<span style='font-size:20px;'>("+data.greenAvg+"%)</span></span> vs <span style='color:red;'>" + 
+		 data.redCount + "<span style='font-size:20px;'>("+data.redAvg+"%)</span></span> " + 
+		 (data.blackCount > 0 ? " ("+data.blackCount+")" : "") + "</h1>" +
+		 "" + 
+		 "<b>Ultima actualización:</b> "+getTimestamp()
 	 );
+}
+
+function getTimestamp(){
+	return new Date().toLocaleTimeString();
 }
