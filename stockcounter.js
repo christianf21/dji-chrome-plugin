@@ -8,13 +8,17 @@
 * By Christian Feo.
 */
 
-updateTime = 5; // segundos
+updateTime = 2; // segundos
 
 console.log("inyected DJI extension script");
+
+inyectWrapper();
 operate();
 
+var reload;
 
 function operate(){
+
 
 	reload = setTimeout(function(){
 		   operate();
@@ -23,15 +27,14 @@ function operate(){
 	flow();
 }
 
-function test(){
-	flow();
-}
-
 function flow(){
 
 	var spans = getSpanElements();
-
+	
 	if(spans.length > 0){
+
+		clearTimeout(reload);
+
 		avgCount = getColorAvgCount(spans);
 		injectHtml(avgCount)
 	}
@@ -39,17 +42,18 @@ function flow(){
 
 function getSpanElements(){
 
-	items = $("td.yfnc_tabledata1"); // the <td> that has <img>
+	items = $("section[data-test='quote-leaf']").children('section')
+					.children('table').children('tbody').children('tr'); // the <td> that has <img>
 	spans = new Array();
 
 	if(items.length > 0)
 		$.each(items, function(){
 
-			var cant = $(this).children('span');
-
-			if(cant.length == 2){
+			var cant = $(this).children('td').children('span');
+			
+			if(cant.length == 1){
 				$.each(cant, function(){
-					spans.push($(this));
+					spans.push($(cant));
 					return false;
 				});
 			}
@@ -66,34 +70,35 @@ function getColorAvgCount(sp){
 	var red = 0;
 	var black = 0;
 
-	var greenClass = "yfi-price-change-green";
-	var redClass = "yfi-price-change-red";
+	var greenClass = "C($dataGreen)";
+	var redClass = "C($dataRed)";
 
 	var totalGreen = 0;
 	var totalRed = 0;
 	var greenAvg = 0;
-	var redAVg = 0;
+	var redAvg = 0;
 
 	$.each(sp, function(){
 
-		var tmp = $(this).children("span");
-		var colorClass = $(tmp).attr("class");
-		var amount = $(tmp).text();
+		var colorClass = $(this).attr("class");
+		var amount = clean($(this).text());
 
 		if(colorClass === greenClass){
 			green += 1;
-			totalGreen += parseFloat(amount);
+			totalGreen += parseFloat(cleanF(amount));
 		}
 		else if(colorClass === redClass){
 			red += 1;
-			totalRed += parseFloat(amount);
+			totalRed += parseFloat(cleanF(amount));
 		}
 		else
 			black += 1;
 	});
 
-	greenAvg = totalGreen / green;
-	redAvg = totalRed / red;
+	if(green > 0 || red > 0){
+		greenAvg = totalGreen / green;
+		redAvg = totalRed / red;
+	}
 
 	return {
 				redCount:red, 
@@ -104,18 +109,50 @@ function getColorAvgCount(sp){
 			};
 }
 
+function cleanF(str){
+	return str.replace(',','.');
+}
+
+function clean(str){
+	return str.replace('%','').replace('-','');
+}
+
+function inyectWrapper(){
+	$("#quote-header-info").append("<div style='padding: 20px;margin: 15px;width: auto;float: left;background-color: rgba(37, 145, 249, 0.15);' id='dji-ext-info-wrapper'></div>");
+}
+
+var reload2 = window.setTimeout(function(){
+		   location.reload(true);
+		}, 9000);
+
 function injectHtml(data){
 
-	$("#companynav").html(
+	$("#dji-ext-info-wrapper").html(
 		"<h1>Index Count:   <span style='color:green;'>" + data.greenCount +
-	 	"<span style='font-size:20px;'>("+data.greenAvg+"%)</span></span> vs <span style='color:red;'>" + 
-		 data.redCount + "<span style='font-size:20px;'>("+data.redAvg+"%)</span></span> " + 
+	 	"<span style=''> ("+data.greenAvg+"%)</span></span> vs <span style='color:red;'>" + 
+		 data.redCount + "<span style=''> ("+data.redAvg+"%)</span></span> " + 
 		 (data.blackCount > 0 ? " ("+data.blackCount+")" : "") + "</h1>" +
-		 "" + 
-		 "<b>Ultima actualización:</b> "+getTimestamp()
+		 "<input type='radio' id='autoref' name='group1' value='autorefresh' checked> Auto Refresh <br>" +
+		 "<input type='radio' id='pausa' name='group1' value='pausa' > Pausa"
 	 );
+
+	$("input:radio[name=group1]").change( function() {
+
+		console.log("cambiando = "+this.value);
+
+		if(this.value === "pausa"){
+			window.clearTimeout(reload2);	
+		} else {
+			reload2 = setTimeout(function(){
+			   location.reload(true);
+			}, 9000);
+		}
+	});
 }
 
 function getTimestamp(){
 	return new Date().toLocaleTimeString();
 }
+
+
+
