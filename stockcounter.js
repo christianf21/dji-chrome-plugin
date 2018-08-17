@@ -8,18 +8,16 @@
 * By Christian Feo.
 */
 
-updateTime = 2; // segundos
+updateTime = 3; // segundos
 
 console.log("inyected DJI extension script");
 
 inyectWrapper();
 operate();
 
-var reload;
+reload;
 
 function operate(){
-
-
 	reload = setTimeout(function(){
 		   operate();
 		}, updateTime*1000);
@@ -28,13 +26,12 @@ function operate(){
 }
 
 function flow(){
-
-	var spans = getSpanElements();
+	console.log("Flowing");
+	let spans = getSpanElements();
 	
 	if(spans.length > 0){
 
-		clearTimeout(reload);
-
+		//clearTimeout(reload);
 		avgCount = getColorAvgCount(spans);
 		injectHtml(avgCount)
 	}
@@ -42,14 +39,13 @@ function flow(){
 
 function getSpanElements(){
 
-	items = $("section[data-test='quote-leaf']").children('section')
-					.children('table').children('tbody').children('tr'); // the <td> that has <img>
+	items = $("tbody[data-reactid='24']").children('tr');
 	spans = new Array();
 
 	if(items.length > 0)
 		$.each(items, function(){
 
-			var cant = $(this).children('td').children('span');
+			let cant = $(this).children('td').children('span');
 			
 			if(cant.length == 1){
 				$.each(cant, function(){
@@ -66,28 +62,28 @@ function getSpanElements(){
 
 function getColorAvgCount(sp){
 
-	var green = 0;
-	var red = 0;
-	var black = 0;
+	let green = 0;
+	let red = 0;
+	let black = 0;
 
-	var greenClass = "C($dataGreen)";
-	var redClass = "C($dataRed)";
+	let greenClass = "C($dataGreen)";
+	let redClass = "C($dataRed)";
 
-	var totalGreen = 0;
-	var totalRed = 0;
-	var greenAvg = 0;
-	var redAvg = 0;
+	let totalGreen = 0;
+	let totalRed = 0;
+	let greenAvg = 0;
+	let redAvg = 0;
 
 	$.each(sp, function(){
 
-		var colorClass = $(this).attr("class");
-		var amount = clean($(this).text());
+		let colorClass = $(this).attr("class");
+		let amount = clean($(this).text());
 
-		if(colorClass === greenClass){
+		if(colorClass.includes(greenClass)){
 			green += 1;
 			totalGreen += parseFloat(cleanF(amount));
 		}
-		else if(colorClass === redClass){
+		else if(colorClass.includes(redClass)){
 			red += 1;
 			totalRed += parseFloat(cleanF(amount));
 		}
@@ -100,7 +96,7 @@ function getColorAvgCount(sp){
 		redAvg = totalRed / red;
 	}
 
-	return {
+	return  {
 				redCount:red, 
 				greenCount:green, 
 				blackCount:black,
@@ -121,9 +117,9 @@ function inyectWrapper(){
 	$("#quote-header-info").append("<div style='padding: 20px;margin: 15px;width: auto;float: left;background-color: rgba(37, 145, 249, 0.15);' id='dji-ext-info-wrapper'></div>");
 }
 
-var reload2 = window.setTimeout(function(){
+let reload2 = window.setTimeout(function(){
 		   location.reload(true);
-		}, 9000);
+		}, 60000);
 
 function injectHtml(data){
 
@@ -137,9 +133,6 @@ function injectHtml(data){
 	 );
 
 	$("input:radio[name=group1]").change( function() {
-
-		console.log("cambiando = "+this.value);
-
 		if(this.value === "pausa"){
 			window.clearTimeout(reload2);	
 		} else {
