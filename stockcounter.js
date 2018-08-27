@@ -46,10 +46,16 @@ function getSpanElements(){
 		$.each(items, function(){
 
 			let cant = $(this).children('td').children('span');
+			let volItem = $(this).children('td:last-child');
 			
 			if(cant.length == 1){
 				$.each(cant, function(){
-					spans.push($(cant));
+
+					let tempitem = {};
+					tempitem['change'] = $(cant);
+					tempitem['vol'] = $(volItem);
+
+					spans.push(tempitem);
 					return false;
 				});
 			}
@@ -74,18 +80,26 @@ function getColorAvgCount(sp){
 	let greenAvg = 0;
 	let redAvg = 0;
 
+	let volTotalGreen = 0;
+	let volTotalRed = 0;
+	let volGreenAvg = 0;
+	let volRedAvg = 0;
+
 	$.each(sp, function(){
 
-		let colorClass = $(this).attr("class");
-		let amount = clean($(this).text());
+		let colorClass = $(this.change).attr("class");
+		let amount = clean($(this.change).text());
+		let vol = cleanDot($(this.vol).text())
 
 		if(colorClass.includes(greenClass)){
 			green += 1;
 			totalGreen += parseFloat(cleanF(amount));
+			volTotalGreen += parseInt(vol);
 		}
 		else if(colorClass.includes(redClass)){
 			red += 1;
 			totalRed += parseFloat(cleanF(amount));
+			volTotalRed += parseInt(vol);
 		}
 		else
 			black += 1;
@@ -94,6 +108,8 @@ function getColorAvgCount(sp){
 	if(green > 0 || red > 0){
 		greenAvg = totalGreen / green;
 		redAvg = totalRed / red;
+		volGreenAvg = volTotalGreen / green;
+		volRedAvg = volTotalRed / red;
 	}
 
 	return  {
@@ -101,8 +117,14 @@ function getColorAvgCount(sp){
 				greenCount:green, 
 				blackCount:black,
 				greenAvg:greenAvg.toFixed(2),
-				redAvg:redAvg.toFixed(2)
-			};
+				redAvg:redAvg.toFixed(2),
+				volRedAvg:volRedAvg.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'),
+				volGreenAvg:volGreenAvg.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
+			}; 
+}
+
+function cleanDot(str){
+	return str.split('.').join('');
 }
 
 function cleanF(str){
@@ -124,9 +146,9 @@ let reload2 = window.setTimeout(function(){
 function injectHtml(data){
 
 	$("#dji-ext-info-wrapper").html(
-		"<h1>Index Count:   <span style='color:green;'>" + data.greenCount +
-	 	"<span style=''> ("+data.greenAvg+"%)</span></span> vs <span style='color:red;'>" + 
-		 data.redCount + "<span style=''> ("+data.redAvg+"%)</span></span> " + 
+		"<h1>Index Count:   <span style='color:green;'><span style='font-size:3rem;'>" + data.greenCount +
+	 	"</span><span style=''> ("+data.greenAvg+"%) (vol. "+data.volGreenAvg+")</span></span> vs <span style='color:red;'><span style='font-size:3rem;'>" + 
+		 data.redCount + "</span><span style=''> ("+data.redAvg+"%) (vol. "+data.volRedAvg+")</span></span> " + 
 		 (data.blackCount > 0 ? " ("+data.blackCount+")" : "") + "</h1>" +
 		 "<input type='radio' id='autoref' name='group1' value='autorefresh' checked> Auto Refresh <br>" +
 		 "<input type='radio' id='pausa' name='group1' value='pausa' > Pausa"
@@ -146,6 +168,3 @@ function injectHtml(data){
 function getTimestamp(){
 	return new Date().toLocaleTimeString();
 }
-
-
-
