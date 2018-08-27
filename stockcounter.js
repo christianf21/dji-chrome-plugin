@@ -112,14 +112,17 @@ function getColorAvgCount(sp){
 		volRedAvg = volTotalRed / red;
 	}
 
+	volRedAvg = numeral(volRedAvg.toFixed(2)).format('0.00a');
+	volGreenAvg = numeral(volGreenAvg.toFixed(2)).format('0.00a');
+
 	return  {
 				redCount:red, 
 				greenCount:green, 
 				blackCount:black,
 				greenAvg:greenAvg.toFixed(2),
 				redAvg:redAvg.toFixed(2),
-				volRedAvg:volRedAvg.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'),
-				volGreenAvg:volGreenAvg.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
+				volRedAvg:volRedAvg,
+				volGreenAvg:volGreenAvg
 			}; 
 }
 
