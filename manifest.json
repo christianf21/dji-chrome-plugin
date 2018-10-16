@@ -3,7 +3,7 @@
 
   "name": "Yahoo DJI Stock Counter",
   "description": "Cuenta cuantos indices verdes VS rojos en el Yahoo DJI Index Average.",
-  "version": "1.0.17",
+  "version": "1.0.18",
 
   "permissions": [ "tabs" ],
 

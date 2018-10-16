@@ -144,7 +144,7 @@ function inyectWrapper(){
 
 let reload2 = window.setTimeout(function(){
 		   location.reload(true);
-		}, 60000);
+		}, updateTime*1000);
 
 function injectHtml(data){
 
