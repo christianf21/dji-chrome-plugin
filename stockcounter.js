@@ -139,16 +139,13 @@ function getDirection(data) {
 		}
 
 		var prev = result['dow_numbers'];
-
-		console.log("saved = "+JSON.stringify(prev));
-
 		var redCountResult = parseInt(data['redCount']) - parseInt(prev['redCount']);
 		var greenCountResult = parseInt(data['greenCount']) - parseInt(prev['greenCount']);
 
 		if (redCountResult > greenCountResult) {
 			countDirection = 'red';
 		} else if (greenCountResult > redCountResult) {
-			countDirection = 'green'
+			countDirection = 'green';
 		} else {
 			// they are equal, must calculate % change now
 			var redAvgResult = parseFloat(data['redAvg']) - parseFloat(prev['redAvg']);
@@ -197,8 +194,10 @@ function injectHtml(data, direction){
 
 	if (direction == 'green') {
 		direction = '<span style="color: green;">UP<span>';
-	} else {
+	} else if(direction == 'red') {
 		direction = '<span style="color: red;">DOWN<span>';
+	} else {
+		direction = '<span>NONE<span>';
 	}
 
 	$("#dji-ext-info-wrapper").html(
