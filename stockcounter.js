@@ -8,32 +8,25 @@
 * By Christian Feo.
 */
 
-updateTime = 3; // segundos
+updateTime = 4.5; // segundos
 
 console.log("inyected DJI extension script");
 
 inyectWrapper();
-operate();
+flow();
 
-reload;
+reload = setTimeout(function(){
+   location.reload(true);
+}, updateTime*1000);
 
-function operate(){
-	reload = setTimeout(function(){
-		   operate();
-		}, updateTime*1000);
-
-	flow();
-}
 
 function flow(){
 	console.log("Flowing");
 	let spans = getSpanElements();
 	
 	if(spans.length > 0){
-
-		//clearTimeout(reload);
-		avgCount = getColorAvgCount(spans);
-		injectHtml(avgCount)
+		var avgCount = getColorAvgCount(spans);
+		getDirection(avgCount);
 	}
 }
 
@@ -126,6 +119,59 @@ function getColorAvgCount(sp){
 			}; 
 }
 
+function getDirection(data) {
+
+	var result = "";
+	var countDirection = "";
+
+	chrome.storage.local.get(['count_direction'], function(result) {
+		if (result.key) {
+			count_direction = result.key;
+		}
+	});
+
+	// check if previous data is stored
+	chrome.storage.local.get(['dow_numbers'], function(result) {
+		if (result === undefined || result.length == 0) {
+			return count_direction;
+		}
+
+		var prev = result['dow_numbers'];
+		var redCountResult = parseInt(data['redCount']) - parseInt(prev['redCount']);
+		var greenCountResult = parseInt(data['greenCount']) - parseInt(prev['greenCount']);
+
+		if (redCountResult > greenCountResult) {
+			countDirection = 'red';
+		} else if (greenCountResult > redCountResult) {
+			countDirection = 'green'
+		} else {
+			// they are equal, must calculate % change now
+			var redAvgResult = parseFloat(data['redAvg']) - parseFloat(prev['redAvg']);
+			var greenAvgResult = parseFloat(data['greenAvg']) - parseFloat(prev['greenAvg']);
+
+			if (redAvgResult > greenAvgResult) {
+				countDirection = 'red';
+			} else if (greenAvgResult > redAvgResult) {
+				countDirection = 'green';
+			} else {
+				// keep same direction
+				countDirection = countDirection;
+			}
+		}
+
+		injectHtml(data, countDirection);
+		saveLastNumbers(data, countDirection);
+    });
+}
+
+function saveLastNumbers(data, direction) {
+	chrome.storage.local.set({'dow_numbers': data});
+
+	if (direction !== undefined || direction.length > 0) {
+		chrome.storage.local.set({'count_direction': direction});
+	}
+}
+
 function cleanDot(str){
 	return str.split('.').join('');
 }
@@ -142,28 +188,32 @@ function inyectWrapper(){
 	$("#quote-header-info").append("<div style='padding: 20px;margin: 15px;width: auto;float: left;background-color: rgba(37, 145, 249, 0.15);' id='dji-ext-info-wrapper'></div>");
 }
 
-let reload2 = window.setTimeout(function(){
-		   location.reload(true);
-		}, updateTime*1000);
+function injectHtml(data, direction){
 
-function injectHtml(data){
+	if (direction == 'green') {
+		direction = '<span style="color: green;">UP<span>';
+	} else {
+		direction = '<span style="color: red;">DOWN<span>';
+	}
 
 	$("#dji-ext-info-wrapper").html(
 		"<h1>Index Count:   <span style='color:green;'><span style='font-size:3rem;'>" + data.greenCount +
 	 	"</span><span style=''> ("+data.greenAvg+"%) (vol. "+data.volGreenAvg+")</span></span> vs <span style='color:red;'><span style='font-size:3rem;'>" + 
 		 data.redCount + "</span><span style=''> ("+data.redAvg+"%) (vol. "+data.volRedAvg+")</span></span> " + 
-		 (data.blackCount > 0 ? " ("+data.blackCount+")" : "") + "</h1>" +
-		 "<input type='radio' id='autoref' name='group1' value='autorefresh' checked> Auto Refresh <br>" +
-		 "<input type='radio' id='pausa' name='group1' value='pausa' > Pausa"
+		 (data.blackCount > 0 ? " ("+data.blackCount+")" : "") + "</h1><span> <h2>Direction: " + direction + "</h2></span><br>"
 	 );
+
+	var controls = "<input type='radio' id='autoref' name='group1' value='autorefresh' checked> Auto Refresh <br>" +
+		 "<input type='radio' id='pausa' name='group1' value='pausa' > Pausa";
+
+
+    $("#dji-ext-info-wrapper").append(controls);
 
 	$("input:radio[name=group1]").change( function() {
 		if(this.value === "pausa"){
-			window.clearTimeout(reload2);	
+			window.clearTimeout(reload);	
 		} else {
-			reload2 = setTimeout(function(){
-			   location.reload(true);
-			}, 9000);
+			location.reload(true);
 		}
 	});
 }
