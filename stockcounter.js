@@ -132,11 +132,16 @@ function getDirection(data) {
 
 	// check if previous data is stored
 	chrome.storage.local.get(['dow_numbers'], function(result) {
-		if (result === undefined || result.length == 0) {
-			return count_direction;
+		if (result['dow_numbers'] === undefined || result['dow_numbers'].length == 0) {
+			// save data for next reload
+			saveLastNumbers(data, countDirection);
+			return;
 		}
 
 		var prev = result['dow_numbers'];
+
+		console.log("saved = "+JSON.stringify(prev));
+
 		var redCountResult = parseInt(data['redCount']) - parseInt(prev['redCount']);
 		var greenCountResult = parseInt(data['greenCount']) - parseInt(prev['greenCount']);
 
